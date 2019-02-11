@@ -104,6 +104,27 @@ df$Date[df$Category == "C1"] <- NA
 # Delete columns with less than four occurrences 
 df <- subset(df, select=c(names(df)[which(colSums(df) > 4)]))
 
+#---------------
+# CUSTOM COLUMNS 
+#---------------
+
+# Create categorical column based upon numerical data of another column 
+# Create DF
+df$Value1.Cat <- NA
+# Under 5 == 1
+df$Value1.Cat[df$Value1 < 5] <- 1
+# Over or equal to 5 == 0
+df$Value1.Cat[df$Value1 >= 5] <- 0
+
+# New column if category 2 == D1, change all category == C1 (the category corresponding to D1)
+# Usage : if we have a public holiday categorised as PH, and remaining days as WD
+# Change that particular week to "incomplete", weeks with 5 days == "complete"
+df <- df %>% 
+  group_by(Category) %>% 
+  mutate(CategoryFilter = if("D1" %in% Category2) "Incomplete" else "Complete")  %>% 
+  ungroup %>% # last two steps assure we still have a workable DF 
+  as.data.frame()
+
 
 #---------------
 # ROWS
