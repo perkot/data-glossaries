@@ -79,6 +79,31 @@ Largest # call function
 # Get sum of only numeric columns 
 rapply(df, sum, class = "numeric")
 
+#---------------
+# DELETE - COLUMNS 
+#---------------
+
+# Delete Columns (in this case column 5)
+subset(df, select = -c(5))
+
+# Delete Columns (individually)
+df$Value2 <- NULL
+
+# Delete Columns that contain only NA values   
+all_na = sapply(df, function(x) all(is.na(x)))
+summary(all_na)
+df.clean = df[!all_na]
+
+# Delete specific values from a column 
+df[!(df$Category == "C1"),]
+
+# Delete specific values from a column based on criteria of another column
+# i.e. turn all dates to 'NA', where category == C1
+df$Date[df$Category == "C1"] <- NA
+
+# Delete columns with less than four occurrences 
+df <- subset(df, select=c(names(df)[which(colSums(df) > 4)]))
+
 
 #---------------
 # ROWS
@@ -90,3 +115,32 @@ slice(df, 1:5)
 # Bind two dataframes
 df2 = df
 rbind(df, df2)
+
+
+#---------------
+# DELETE - ROWS
+#---------------
+
+# Delete a specific row, based on a value
+df[ !(df$Value1 %in% c(4.13)), ]
+# Delete a specific row, based on a category
+df[ !(df$Group == "G1"), ]
+
+# Delete all rows where NA values present in a specific column
+df %>% drop_na(Value3)
+
+# Delete specific rows, based on a criteria (i.e. particular IDs - delete 1,3,5)
+df[ !(df$ID %in% c(1, 3, 5)), ]
+
+# Delete rows with complete data, leaving only data with missing values 
+df.incomplete <- subset(df, select = -c(8))
+df.incomplete <- df.incomplete[!complete.cases(df.incomplete), ]
+
+# Delete rows with incomplete data
+df.complete <- df[complete.cases(df), ]
+
+# Keep rows with blank data
+df.blank <- df[ which( df$Value3 == "") , ]
+
+# Keep rows for which one column is missing data, but the other has complete data
+df.test <- subset(df , is.na(Value3))
