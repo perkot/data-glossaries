@@ -87,6 +87,26 @@ STARTDATE <= (current_date - 1)
 -- month
 
 -- =================================================
+-- SUBSTRING & DATES
+-- =================================================
+
+-- remove characters from the end of a string 
+,LEFT('String.PDF', char_length('String.PDF')-4) AS 'String' -- remove 4 characters 
+
+-- add leading zeroes
+,lpad('1/11/2022',8,'0') AS '01/11/2022' -- 8 is the number of existing characters, 0 is the string to add
+
+-- extract all of a string up to a character
+,strtok('01/11/2022.xlsx','.',1) AS '01/11/2022' -- extract all of string up to the period
+
+-- extract part of string after the final occurrence of a character
+,substr('C/File/Folder/01112022', instr('C/File/Folder/01112022', '/', -1)+1) AS '01112022'
+
+-- limit a string to only alpha numeric characters - very useful when you have funky characters polluting a dataset 
+,WHERE LIKE '%[a-z0-9]%'
+
+
+-- =================================================
 -- WINDOW FUNCTIONS 
 -- ================================================= 
 
