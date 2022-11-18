@@ -32,9 +32,10 @@ ON COMMIT PRESERVE ROWS
 ;
 
 -- =================================================
--- IDENTIFY MY ROLES 
+-- BASIC
 -- =================================================
 
+-- Identify a role in a database 
 SELECT A.* FROM DBC.ROLEMEMBERS AS A WHERE GRANTEE = "USERNAME"
 
 -- =================================================
@@ -105,10 +106,18 @@ STARTDATE <= (current_date - 1)
 -- limit a string to only alpha numeric characters - very useful when you have funky characters polluting a dataset 
 ,WHERE LIKE '%[a-z0-9]%'
 
+-- =================================================
+-- WILDCARDS
+-- =================================================
+
+CASE WHEN 'LONG-STRING' LIKE 'LONG%' -- String beginning with 'long' will be included 
 
 -- =================================================
 -- WINDOW FUNCTIONS 
 -- ================================================= 
+
+-- Create a row index as an ID
+sum(1) over (ROWS unbounded preceding) AS ROW_ID 
 
 -- Creates column with difference by row, from year to year
 SELECT  

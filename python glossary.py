@@ -142,6 +142,13 @@ df.dtypes
 # create an ID
 df["id"] = df.index + 1
 
+# -------------------------------------------
+# COLUMN-WISE 
+# -------------------------------------------
+
+# subset columns
+df = df[["ID", "Date", "Time"]]
+
 
 # -------------------------------------------
 # VARIABLE CASTING 
@@ -149,8 +156,13 @@ df["id"] = df.index + 1
 
 import datetime as dt 
 
+# convert date string to date
 df['Date'] = pd.to_datetime(df['Date'])
+# convert date time to date
 df['DateTime'] = pd.to_datetime(df['Date'])
+# convert a year string to year in date format 
+df['year'] = pd.df(co2_avg['year'], format='%Y')
+
 
 # -------------------------------------------
 # NAs & BLANKS
