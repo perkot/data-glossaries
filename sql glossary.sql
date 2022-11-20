@@ -110,11 +110,29 @@ STARTDATE <= (current_date - 1)
 -- WILDCARDS
 -- =================================================
 
-CASE WHEN 'LONG-STRING' LIKE 'LONG%' -- String beginning with 'long' will be included 
+CASE WHEN 'LONG-STRING' LIKE 'LONG%' THEN 1 ELSE O END AS LONG_FLAG  -- String beginning with 'long' will be included 
 
 -- =================================================
 -- WINDOW FUNCTIONS 
 -- ================================================= 
+-- https://learnsql.com/blog/partition-by-with-over-sql/
+-- PARTITION BY expression is a subclause of the OVER clause
+    -- AVG(), 
+    -- MAX(), 
+    -- RANK(),
+    -- ROW_NUMBER()
+
+-- Can also do 
+    -- GROUP BY
+    -- ORDER BY
+
+SELECT
+    car_make,
+    car_model,
+    car_price,
+    AVG(car_price) OVER() AS "overall average price", -- this returns the overall avg car price - the same for every row 
+    AVG(car_price) OVER (PARTITION BY car_type) AS "car type average price" -- this returns the avg car price for each car type, differs by row depending upon the car type 
+FROM car_list_prices
 
 -- Create a row index as an ID
 sum(1) over (ROWS unbounded preceding) AS ROW_ID 
@@ -152,7 +170,8 @@ WITH
     SELECT
        PRODUCT_ID
       ,SALES
-      ,RANK() OVER (PARTITION BY PRODUCT_ID ORDER BY SALES DESC) AS rk 
+      ,RANK() OVER (PARTITION BY PRODUCT_ID ORDER BY SALES DESC) AS rk -- rank orders 1,2,2,4,4,4,7
+      ,DENSE_RANK() OVER (PARTITION BY PRODUCT_ID ORDER BY SALES DESC) AS rkd  -- dense rank orders 1,2,2,3,3,3,4
     FROM APPS
   )
 SELECT
@@ -161,6 +180,14 @@ SELECT
 FROM TOP_RANK
 WHERE rk = 1
 ;
+
+
+-- Running sum / Rolling sum 
+SELECT 
+     StudentName
+    ,StudentAge
+    ,sum (StudentAge) OVER (ORDER BY Id) AS running_sum_age
+FROM Students
 
 -- =================================================
 -- TRIGGERS
@@ -289,4 +316,98 @@ INNER JOIN cte b
 JOIN departments c
   ON a.department_id = c.id
 ORDER BY 3
+;
+
+-- https://datalemur.com/questions/duplicate-job-listings
+WITH
+  DUPES AS
+  (
+  SELECT
+     job_id
+    ,company_id
+    ,description
+    ,row_number() over (partition by company_id, description order by job_id) AS rn -- the key here is the double partition by
+  FROM job_listings
+  )
+SELECT
+  count(company_id) AS co_w_duplicate_jobs
+FROM DUPES
+WHERE rn >= 2
+;
+
+
+-- https://datalemur.com/questions/sql-average-post-hiatus-1
+
+SELECT 
+    user_id
+    ,max(post_date::date)- min(post_date::date) AS days_between -- note the odd casting - I am not familiar enough with postgres to cast this way. In Teradata this is achieved via date_diff
+FROM posts
+WHERE DATE_PART('year',post_date::date)=2021 -- filter to only 2021
+GROUP BY 
+	user_id
+HAVING count(post_id)>=2 -- post twice or more 
+
+-- https://datalemur.com/questions/matching-skills
+WITH
+  SKILLS AS
+  (
+  SELECT
+     candidate_id
+    ,sum(case when skill in ('Python') THEN 1 ELSE 0 END) AS PYTHON_FLAG
+    ,sum(case when skill in ('Tableau') THEN 1 ELSE 0 END) AS TAB_FLAG
+    ,sum(case when skill in ('PostgreSQL') THEN 1 ELSE 0 END) AS SQL_FLAG
+  FROM candidates
+  GROUP BY  
+    candidate_id
+  )
+SELECT
+  candidate_id
+FROM SKILLS
+WHERE PYTHON_FLAG = 1 AND TAB_FLAG = 1 AND SQL_FLAG = 1
+ORDER BY candidate_id ASC
+;
+
+-- https://datalemur.com/questions/teams-power-users
+SELECT 
+   sender_id
+  ,count(message_id) as message_count
+FROM messages
+WHERE sent_date >= '08-01-2022' AND sent_date <= '08-31-2022'
+GROUP BY
+  sender_id
+ORDER BY
+  message_count DESC
+LIMIT 2
+
+-- https://datalemur.com/questions/top-fans-rank
+WITH TOPSONG AS
+(
+SELECT
+   SR.song_id
+  ,count(SR.rank) AS TOTAL_RANKS
+FROM global_song_rank as SR 
+WHERE SR.rank <= 10
+GROUP BY
+  SR.song_id 
+),
+TOPRANK2 AS
+(
+SELECT 
+   A.artist_name
+  ,sum(TR.TOTAL_RANKS) AS total_songs
+  ,dense_rank() over (ORDER BY sum(TR.TOTAL_RANKS) DESC) AS artist_rank -- dense rank orders 1,2,2,3,3,3,4 rather than rank which is 1,2,2,4,4,4,7
+FROM TOPSONG AS TR
+LEFT JOIN songs as S
+  ON TR.song_id = S.song_id
+LEFT JOIN artists as A
+  ON S.artist_id = A.artist_id
+GROUP BY
+  A.artist_name
+)
+SELECT
+  artist_name
+  ,artist_rank
+FROM TOPRANK2 
+WHERE artist_rank <=5 -- this works with dense rank, as it means position 5 could be more than 5 artists in the case of tied results 
+ORDER BY artist_rank ASC
 ;
