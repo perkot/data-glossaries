@@ -142,6 +142,11 @@ df.dtypes
 # create an ID
 df["id"] = df.index + 1
 
+# print laat 20 rows 
+df.tail(20)
+# print first 20 rows
+df.tail(20)
+
 # -------------------------------------------
 # COLUMN-WISE 
 # -------------------------------------------
@@ -163,6 +168,13 @@ df['DateTime'] = pd.to_datetime(df['Date'])
 # convert a year string to year in date format 
 df['year'] = pd.df(co2_avg['year'], format='%Y')
 
+# -------------------------------------------
+# DATE FIELDS
+# -------------------------------------------
+
+# create yr-month column from date - field must be date type 
+df['yr-month'] = df['Date'].dt.strftime('%Y-%m')
+
 
 # -------------------------------------------
 # NAs & BLANKS
@@ -179,6 +191,9 @@ df = df.dropna(subset=['Value3','Value5'], thresh=2)
 
 # left join on single id
 df_lj = df.merge(df2, on = 'ID', how = "left")
+
+# left join on different named id & drop columns 
+df_lj = df.merge(df2, left_on='ID', right_on='ID', how = "left").drop(columns = ['Date'])
 
 # -------------------------------------------
 # GROUP CALCULATIONS
