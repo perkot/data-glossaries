@@ -5,6 +5,9 @@
 # https://stackoverflow.com/questions/54331595/vs-code-cant-open-the-terminal
 # when terminal gets stuck being invisible
 
+# Pandas Introduction 
+# https://pandas.pydata.org/docs/user_guide/dsintro.html
+
 # -------------------------------------------
 # BASIC SET-UP / TERMINAL
 # -------------------------------------------
@@ -130,6 +133,44 @@ df4 = pd.DataFrame(data4)
 df4
 
 # -------------------------------------------
+# KEY CONCEPTS
+# -------------------------------------------
+
+# ------------
+# SCALAR VALUE
+# ------------
+# unchanging i.e. 5,5,5,5,5
+
+# ------------
+# TUPLE
+# ------------
+# Similar to list, but cannot be changed once assigned 
+# Tuple having integers
+tuple1 = (1, 2, 3)
+# tuple with mixed datatypes
+tuple2 = (1, "Hello", 3.4)
+
+# ------------
+# LAMBDA FUNCTION
+# ------------
+# An anonymous function
+# https://www.programiz.com/python-programming/anonymous-function
+
+# a special type of function without the function name
+greeting = lambda name : print('Hey there, ', name)
+# call lambda function
+greeting('Tom')
+# Hey there,  Tom
+
+# ------------
+# LOC & ILOC 
+# ------------
+# loc : return rows/columns with particular labels 
+# iloc : return rows/columns at integer locations
+df.loc["2018-12-14"] # select by index row (in this example, date index assumed)
+df.iloc[2] # select by index location 
+
+# -------------------------------------------
 # BASIC DATA EVALUATION 
 # -------------------------------------------
 
@@ -139,13 +180,30 @@ df.describe()
 # get variable types of all columns 
 df.dtypes
 
-# create an ID
-df["id"] = df.index + 1
-
+# print df
+print(df)
 # print laat 20 rows 
 df.tail(20)
 # print first 20 rows
 df.tail(20)
+
+# -------------------------------------------
+# INDEXING 
+# -------------------------------------------
+
+# Basic Indexing 
+df["Category"] # select a single column
+df.loc["2018-12-14"] # select by index row (in this example, date index assumed)
+df.iloc[2] # select by index location 
+df[1:3] # subset by first 3 rows (remember, zero indexing in python!)
+
+# create an ID
+df["id"] = df.index + 1
+
+# set index as date 
+df.set_index('Date')
+
+
 
 # -------------------------------------------
 # COLUMN-WISE 
@@ -153,6 +211,22 @@ df.tail(20)
 
 # subset columns
 df = df[["ID", "Date", "Time"]]
+
+# delete specific column  
+del df["Time"]
+
+# create a scalar column 
+df["Company"] = "Tom Incorporated"
+
+# new column calculated from two columns - equiv. to dplyr "mutate"
+df.assign(value_ratio =df["Value1"] / df["Value2"])
+# conditional calculation from two columns - determine ratio when Value1 > 10
+(
+     df.query("Value1 > 10") # filtered df
+    .assign(
+            value_ratio = lambda x: x.Value1 / x.Value2 # ratio calculated on filtered df
+           )
+)
 
 
 # -------------------------------------------
@@ -166,22 +240,51 @@ df['Date'] = pd.to_datetime(df['Date'])
 # convert date time to date
 df['DateTime'] = pd.to_datetime(df['Date'])
 # convert a year string to year in date format 
-df['year'] = pd.df(co2_avg['year'], format='%Y')
+df['year'] = pd.df(df['year'], format='%Y')
 
 # -------------------------------------------
 # DATE FIELDS
 # -------------------------------------------
 
-# create yr-month column from date - field must be date type 
+# ------------
+# FORMAT CODES
+# ------------
+# %a = abbrv. weekday       %A = full weekday      %w weekday as no.
+# %d = day of the month     %b = abbrv. month      %B full month
+# %m = month as no.         %y = year as no.       %H hour (24h)            %I hour (12h)
+# %p = AM/PM                %M = minute            %S second
+# %j = day of year          %U = week no. of year  
+
+# ------------
+# Year-Month
+# ------------
 df['yr-month'] = df['Date'].dt.strftime('%Y-%m')
 
+# ------------
+# Date Indexing 
+# ------------
+
+# If date is a 'DatetimeIndex', 
+# https://jakevdp.github.io/PythonDataScienceHandbook/03.11-working-with-time-series.html#Pandas-Time-Series:-Indexing-by-Time
+df = df.set_index(pd.DatetimeIndex(df['Date']))
+# we can easily add columns with year, month, and weekday name
+df['Year'] = df.index.year
+df['Month'] = df.index.month
+df['Weekday'] = df.index.weekday
+
+# all values for a specific date 
+df.loc['2018-12-14']
+# range of dates
+df.loc['2018-12-14':'2018-12-16']
+# all values for a specific year
+df.loc['2018']
 
 # -------------------------------------------
 # NAs & BLANKS
 # -------------------------------------------
 
 # remove rows where blank data in multiple columns 
-df = df[df[['Value3','Value4']].eq('').sum(1).lt(2)]
+df = df[df[['Value3','Value4']].eq('').sum(1).lt(2)] # equals '', sum 1, less than 2
 # remove rows where NaN data in multiple columns 
 df = df.dropna(subset=['Value3','Value5'], thresh=2)
 
@@ -199,13 +302,17 @@ df_lj = df.merge(df2, left_on='ID', right_on='ID', how = "left").drop(columns = 
 # GROUP CALCULATIONS
 # -------------------------------------------
 
-# Get mean x grouping variable(s)
-
 # https://stackoverflow.com/questions/46938572/pandas-groupby-mean-into-a-dataframe
-# This calculates group means 
-# double brackets to ensure a df 
-# also need to include both grouping variables in mean calculation 
-acorn_avg =  acorn.groupby(['State', 'Year'], as_index = False).mean()[['State', 'Year', 'max_temp']]
+
+    # double brackets to ensure a df 
+    # also need to include both grouping variables in mean calculation 
+
+# avg
+df_avg = df.groupby(['Category','Category2'], as_index = False).mean()[['Category','Category2', 'Value1']]
+print(df_avg)
+# sum
+df_sum = df.groupby(['Category','Category2'], as_index = False).sum()[['Category','Category2', 'Value1']]
+print(df_sum)
 
 # -------------------------------------------
 # PIVOTS
@@ -214,7 +321,12 @@ acorn_avg =  acorn.groupby(['State', 'Year'], as_index = False).mean()[['State',
 # Long to wide 
 
 # https://stackoverflow.com/questions/28337117/how-to-pivot-a-dataframe-in-pandas
-acorn_avg_p = pd.pivot_table(acorn_avg, values = 'max_temp', index=['Year'], columns = 'State').reset_index()
+
+    # rows = Category
+    # columns = Category2
+    # values = Value1
+df_avg_piv = pd.pivot_table(df_avg, values = 'Value1', index = ['Category'], columns = 'Category2').reset_index()
+print(df_avg_piv)
 
 # -------------------------------------------
 # IMPORT / EXPORT TO .CSV  
@@ -222,6 +334,8 @@ acorn_avg_p = pd.pivot_table(acorn_avg, values = 'max_temp', index=['Year'], col
 
 # Import
 acorn = pd.read_csv(r"/Users/perkot/GIT/data/ACORN-SAT-Clean.csv")
+# Import with first column as 'index' - useful for time series 
+acorn = pd.read_csv(r"/Users/perkot/GIT/data/ACORN-SAT-Clean.csv", index_col = 0, parse_dates = True) 
 
 # Export 
 df_lj.to_csv(r"/Users/perkot/GIT/data/df_lj.csv", index = False)
