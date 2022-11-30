@@ -38,6 +38,7 @@ python3 -m pip install "Orbit"
 
 # Importing Pandas to create DataFrame - necessary package for data wrangling 
 import pandas as pd
+import numpy as np
 
 # -------------------------------------------
 # ENVIRONMENT SET-UP
@@ -180,6 +181,9 @@ df.describe()
 # get variable types of all columns 
 df.dtypes
 
+# useful summary of a df 
+df.info()
+
 # print df
 print(df)
 # print laat 20 rows 
@@ -204,10 +208,12 @@ df["id"] = df.index + 1
 df.set_index('Date')
 
 
-
 # -------------------------------------------
 # COLUMN-WISE 
 # -------------------------------------------
+
+# lower case column names
+df.columns = [x.lower() for x in df.columns]
 
 # subset columns
 df = df[["ID", "Date", "Time"]]
@@ -232,6 +238,22 @@ df.assign(value_ratio =df["Value1"] / df["Value2"])
 # -------------------------------------------
 # VARIABLE CASTING 
 # -------------------------------------------
+
+# ------------
+# Common Data Types
+# ------------
+# string                                object
+# int64                                  int64
+# uint8                                  uint8
+# float64                              float64
+# bool1                                   bool
+# bool2                                   bool
+# dates                         datetime64[ns]
+# category                            category
+# tdeltas                      timedelta64[ns]
+# uint64                                uint64
+# other_dates                   datetime64[ns]
+# tz_aware_dates    datetime64[ns, US/Eastern]
 
 import datetime as dt 
 
@@ -297,6 +319,49 @@ df_lj = df.merge(df2, on = 'ID', how = "left")
 
 # left join on different named id & drop columns 
 df_lj = df.merge(df2, left_on='ID', right_on='ID', how = "left").drop(columns = ['Date'])
+
+# -------------------------------------------
+# DESCRIPTIVE STATISTICS
+# -------------------------------------------
+
+# ------------
+# Descriptive Statistics
+# # ------------ 
+# count     # sum       # mean      # mad
+# median    # min       # max       # mode
+# abs       # prod      # std       # var
+# sem       # skew      # kurt      # quantile
+# cumsum    # cumprod   # cummax    # cummin 
+
+# ------------
+# Means
+# ------------
+# mean by index
+df.mean(0) # can specify skipna = True/False
+# mean by column 
+df.mean(1)
+
+# ------------
+# Sum
+# ------------
+# sum of column 
+df.sum(axis=0, skipna=True)
+
+# ------------
+# Cumululative sum 
+# ------------
+# cumulative sum of a single column 
+df["value1"].cumsum(0)
+
+# ------------
+# Multiple descriptive statistics  
+# ------------
+# generic descriptive statistics
+df["value3"].describe()
+# specify percentiles 
+df["value3"].describe(percentiles=[0.05, 0.25, 0.75, 0.95])
+# describe only columns where data type = number (could also be "object" or "all")
+df.describe(include=["number"],percentiles=[0.05, 0.25, 0.75, 0.95])
 
 # -------------------------------------------
 # GROUP CALCULATIONS
