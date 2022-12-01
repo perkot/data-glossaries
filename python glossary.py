@@ -34,11 +34,13 @@ jupyter notebook --notebook-dir=/Users/perkot/GIT/python
 # PACKAGE MANAGEMENT 
 # -------------------------------------------
 
+# Installing
 python3 -m pip install "Orbit"
 
-# Importing Pandas to create DataFrame - necessary package for data wrangling 
+# Importing 
 import pandas as pd
 import numpy as np
+import datetime as dt 
 
 # -------------------------------------------
 # ENVIRONMENT SET-UP
@@ -234,6 +236,12 @@ df.assign(value_ratio =df["Value1"] / df["Value2"])
            )
 )
 
+# transform to provide operations across entire dataframes
+# remove all negative values 
+df4.transform(np.abs)
+# column specific - make time-point abs, and add 100 to score 
+df4.transform({"TimePoint": np.abs, "Score": lambda x: x + 100})
+
 
 # -------------------------------------------
 # VARIABLE CASTING 
@@ -254,8 +262,6 @@ df.assign(value_ratio =df["Value1"] / df["Value2"])
 # uint64                                uint64
 # other_dates                   datetime64[ns]
 # tz_aware_dates    datetime64[ns, US/Eastern]
-
-import datetime as dt 
 
 # convert date string to date
 df['Date'] = pd.to_datetime(df['Date'])
@@ -310,6 +316,11 @@ df = df[df[['Value3','Value4']].eq('').sum(1).lt(2)] # equals '', sum 1, less th
 # remove rows where NaN data in multiple columns 
 df = df.dropna(subset=['Value3','Value5'], thresh=2)
 
+# remove specific rows
+df.drop([1, 9], axis=0) # 0 = rows 
+# remove specific columns 
+df.drop(["Group"], axis = 1)
+
 # -------------------------------------------
 # JOINS
 # -------------------------------------------
@@ -318,7 +329,7 @@ df = df.dropna(subset=['Value3','Value5'], thresh=2)
 df_lj = df.merge(df2, on = 'ID', how = "left")
 
 # left join on different named id & drop columns 
-df_lj = df.merge(df2, left_on='ID', right_on='ID', how = "left").drop(columns = ['Date'])
+df_lj = df.merge(df2, left_on ='ID', right_on ='ID', how = "left").drop(columns = ['Date'])
 
 # -------------------------------------------
 # DESCRIPTIVE STATISTICS
@@ -326,7 +337,7 @@ df_lj = df.merge(df2, left_on='ID', right_on='ID', how = "left").drop(columns = 
 
 # ------------
 # Descriptive Statistics
-# # ------------ 
+# ------------ 
 # count     # sum       # mean      # mad
 # median    # min       # max       # mode
 # abs       # prod      # std       # var
@@ -340,6 +351,13 @@ df_lj = df.merge(df2, left_on='ID', right_on='ID', how = "left").drop(columns = 
 df.mean(0) # can specify skipna = True/False
 # mean by column 
 df.mean(1)
+
+# apply mean across all columns (must contain only numeric columns)
+df4.apply(np.mean)
+# use where multiple types of columns 
+df.apply("mean")
+# use anonymous function to subtract max from min for all columns (with apply)
+df4.apply(lambda x: x.max() - x.min())
 
 # ------------
 # Sum
@@ -362,6 +380,25 @@ df["value3"].describe()
 df["value3"].describe(percentiles=[0.05, 0.25, 0.75, 0.95])
 # describe only columns where data type = number (could also be "object" or "all")
 df.describe(include=["number"],percentiles=[0.05, 0.25, 0.75, 0.95])
+
+# agg is another way to produce multiple statistics 
+df4.agg(["sum", "mean"])
+
+# ------------
+# Histogram buckets
+# ------------
+data = np.random.randint(0, 7, size=50)
+pd.value_counts(data)
+
+# ------------
+# Bins
+# ------------
+# based on value
+factor = pd.cut(df["value1"], 4)
+print(factor)
+# based on quantile 
+factor = pd.qcut(df["value1"], [0, 0.25, 0.5, 0.75, 1])
+print(factor)
 
 # -------------------------------------------
 # GROUP CALCULATIONS
